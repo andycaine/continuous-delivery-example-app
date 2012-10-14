@@ -1,0 +1,18 @@
+<project name="continious-delivery-example-app" default="compile" basedir=".">
+
+  <property name="build" location="build" />
+
+  <target name="init">
+    <mkdir dir="${build}" />
+  </target>
+
+  <sql driver="com.mysql.jdbc.Driver"
+       url="jdbc:mysql://localhost"
+       userid="andy"
+       password="password" >
+  </sql>
+       
+
+       
+  
+</project>

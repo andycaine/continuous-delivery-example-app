@@ -1,0 +1,56 @@
+apply plugin: 'java'
+
+
+def databaseName = 'cd_example'
+
+task printClasspath << {
+  println configurations.compile.asPath
+}
+
+task dropDatabase << {
+  runSql("drop database if exists ${databaseName}")
+}
+
+task createDatabase << {
+  runSql("create database if not exists ${databaseName}")
+}
+
+task createApplicationDatabaseUser(dependsOn: createDatabase) << {
+  runSql("grant all on ${databaseName}.* to '${applicationDatabaseUsername}'@'%' identified by '${applicationDatabasePassword}'")
+}
+
+task createChangelogTable(dependsOn: createDatabase) << {
+  runSql("""\
+    CREATE TABLE changelog (
+      change_number BIGINT NOT NULL,
+      complete_dt TIMESTAMP NOT NULL,
+      applied_by VARCHAR(100) NOT NULL,
+      description VARCHAR(500) NOT NULL
+    );
+    ALTER TABLE changelog ADD CONSTRAINT Pkchangelog PRIMARY KEY (change_number)
+    """, databaseName)
+}
+
+def runSql(sql, database = null) {
+  def url = "jdbc:mysql://${databaseHost}"
+  if (database) {
+    url += "/${database}"
+  }
+  ant.sql(
+    driver: 'com.mysql.jdbc.Driver', 
+    url: url,
+    userid: dbaUsername, 
+    password: dbaPassword,
+    classpath: configurations.runtime.asPath) {
+      transaction(sql)
+    }
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime 'mysql:mysql-connector-java:5.1.21'
+}
+
